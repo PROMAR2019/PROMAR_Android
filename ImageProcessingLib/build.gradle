@@ -1,0 +1,56 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 26
+
+
+
+    defaultConfig {
+        minSdkVersion 24
+        targetSdkVersion 26
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        ndk { abiFilter "armeabi-v7a" }
+
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility = '1.8'
+        targetCompatibility = '1.8'
+    }
+
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'com.android.support:appcompat-v7:26.0.0'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    api project(':tensorflow')
+    api project(':openCVLibrary331dev')
+    implementation 'org.apache.commons:commons-math3:3.6.1'
+}
+//
+//task makejar(type: Copy) {
+//    delete "build/libs/imageprocessinglib.jar"
+//    from('build/intermediates/bundles/release/')
+//    into('../OutputLibs/')
+//    include('classes.jar')
+//    rename('classes.jar', "imageprocessinglib.jar")
+//}
+//
+//makejar.dependsOn(build)
+//
+//task copyLibs(type: Copy) {
+//    from configurations.api
+//    into 'libs'
+//}

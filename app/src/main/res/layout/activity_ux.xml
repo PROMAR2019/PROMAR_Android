@@ -1,0 +1,149 @@
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+  <FrameLayout
+      android:id="@+id/frameLayout"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:layout_weight="1"
+      android:clipChildren="false"
+      app:layout_constraintDimensionRatio="H,9:16"
+      tools:context=".PromarMainActivity">
+
+    <fragment
+        android:id="@+id/ux_fragment"
+        android:name="com.google.ar.sceneform.samples.promar.MyArFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+    <!--
+android:layout_height="match_parent"
+-->
+    <com.google.ar.sceneform.samples.promar.OverlayView
+        android:id="@+id/tracking_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <com.google.ar.sceneform.samples.promar.OverlayView
+        android:id="@+id/debug_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+
+
+  </FrameLayout>
+
+  <android.support.v7.widget.AppCompatImageView
+      android:id="@+id/imgview"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_weight="1" />
+
+  <Button
+      android:id="@+id/record"
+      android:layout_width="wrap_content"
+      android:layout_height="48dp"
+      android:text="Place VO"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintHorizontal_bias="0.945"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toTopOf="parent"
+      app:layout_constraintVertical_bias="0.965"
+      tools:text="Place VO" />
+
+  <Button
+      android:id="@+id/retrieve"
+      android:layout_width="88dp"
+      android:layout_height="48dp"
+      android:text="@string/retrieve"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintHorizontal_bias="0.094"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toTopOf="parent"
+      app:layout_constraintVertical_bias="0.965"
+      tools:text="Retrieve" />
+
+  <RadioGroup
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintHorizontal_bias="0.5"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toTopOf="parent"
+      app:layout_constraintVertical_bias="0.965"
+      android:id="@+id/rg_role">
+
+    <RadioButton
+        android:id="@+id/rb_owner"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Owner" />
+
+    <RadioButton
+        android:id="@+id/rb_viewer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Viewer" />
+  </RadioGroup>
+
+  <SeekBar
+      android:id="@+id/seekBar"
+      android:layout_width="200dp"
+      android:layout_height="wrap_content"
+      android:rotation="270"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintTop_toTopOf="parent"
+      />
+
+
+
+  <TextView
+      android:id="@+id/cangle"
+      android:layout_width="wrap_content"
+      android:layout_height="15dp"
+      android:layout_marginStart="8dp"
+      android:layout_marginEnd="8dp"
+      android:layout_marginBottom="32dp"
+      android:text="@string/angle"
+      app:layout_constraintBottom_toTopOf="@+id/record"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent" />
+
+  <TextView
+      android:id="@+id/mratio"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginStart="8dp"
+      android:layout_marginEnd="8dp"
+      android:layout_marginBottom="32dp"
+      android:text="@string/ratio"
+      app:layout_constraintBottom_toTopOf="@+id/cangle"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent" />
+  <!--
+   <LinearLayout
+       android:layout_width="match_parent"
+       android:layout_height="wrap_content"
+       android:layout_weight="1">
+      <android.support.v7.widget.AppCompatImageView
+         android:id="@+id/imgview"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+         android:layout_weight="1" />
+      <Button
+         android:id="@+id/button"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+         android:layout_weight="1"
+         android:onClick="takePhoto"
+         android:text="Take" />
+    </LinearLayout>
+    -->
+</android.support.constraint.ConstraintLayout>
