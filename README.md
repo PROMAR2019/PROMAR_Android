@@ -4,26 +4,29 @@ This is an implementation of PROMAR on Android. PROMAR aims at providing multi-u
 
 ![](img/demo.gif)
 
+The above gif image is a display of our PROMAR Android application. For more demos, please refer to [demo_video/](https://github.com/PROMAR2019/PROMAR_Android/tree/master/demo_video).
+
 ## Requirement
 
 * SDK version 24 or higher
 * JAVA 8 or higher
+* [ARCore supported mobile phone](https://developers.google.com/ar/discover/supported-devices)
 
 
 # Step by Step
 
-Below are a series of basic processes in a complete workflow.
+Below are instructions for running RPOMAR on your smartphone.
 
 
-## 1. Find reference object and place virtual oject
+## 1. Find reference object and place virtual object
 
-When TensorFlow successfully recognizes objects, use them as references and press PLACE VO button to place virtual object. Use the bar on right of the screen to adjust virtual object distance.
+When TensorFlow successfully recognizes objects, use them as references and press PLACE VO button to place virtual object.
 
 ![](img/step_1.png)
 
 ## 2. Extract feature points and save data to local
 
-After you feeling satisfied with the virtual object, press CONFIRM button. Take a breath, the application takes a few seconds to finish this process, but you will see that pays off.
+Use the bar on right of the screen to adjust virtual object distance. After you feeling satisfied with the virtual object, press CONFIRM button. Take a breath, the application takes a few seconds to finish this process, but you will see that pays off.
 
 ![](img/step_2.png)
 
