@@ -22,22 +22,22 @@ Below are instructions for running RPOMAR on your smartphone.
 
 When TensorFlow successfully recognizes objects, use them as references and press PLACE VO button to place virtual object.
 
-![](img/step_1.png)
+<img src="https://github.com/PROMAR2019/PROMAR_Android/blob/master/img/step_1.png" width="370" height="640">
 
 ## 2. Extract feature points and save data to local
 
 Use the bar on right of the screen to adjust virtual object distance. After you feeling satisfied with the virtual object, press CONFIRM button. Take a breath, the application takes a few seconds to finish this process, but you will see that pays off.
 
-![](img/step_2.png)
+<img src="https://github.com/PROMAR2019/PROMAR_Android/blob/master/img/step_2.png" width="370" height="640">
 
 ## 3. Swith to Viewer mode and load data
 
 After the virtual object owner finished cooking, now it's time to serve it to the viewer. Press the Viewer box at the bottom of screen to switch to viewer mode and click button RETRIEVE to load data. Hold tight, magic time!
 
-![](img/step_3.png)
+<img src="https://github.com/PROMAR2019/PROMAR_Android/blob/master/img/step_3.png" width="370" height="640">
 
 ## 4. Scan the reference object to retrieve the virtual object
 
 When the message "Data loaded" toasts on screen, scan the reference object and say hello to your new/old friend.
 
-<img src="https://github.com/PROMAR2019/PROMAR_Android/blob/master/img/step_4.png" width="380" height="630">
+<img src="https://github.com/PROMAR2019/PROMAR_Android/blob/master/img/step_4.png" width="370" height="640">
