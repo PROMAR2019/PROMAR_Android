@@ -126,43 +126,35 @@ public class ImageProcessor {
         return r;
     }
 
-    static public ImageFeature extractRobustFeatures(Bitmap img) {
-        Mat mat = new Mat();
-        Utils.bitmapToMat(img, mat);
-        return extractRobustFeatures(mat);
-    }
-
-    static public ImageFeature extractRobustFeatures(Mat img, int num) {
-        return extractRobustFeatures(img, num, DescriptorType.ORB);
-    }
-
     static public ImageFeature extractRobustFeatures(Mat img, int num, DescriptorType type) {
         MatOfKeyPoint kps = new MatOfKeyPoint();
         Mat des = new Mat();
-//        FeatureDetector featureDetector = new FeatureDetector(num);
-//        featureDetector.extractRobustFeatures(img, kps, des, type, num);
-        FeatureDetector.getInstance().extractRobustFeatures(img, FeatureDetector.getInstance().distortImage(img), kps, des, type, num, 300, null);
-        return new ImageFeature(kps, des, type);
+        FeatureDetector.getInstance().extractFeatures(img, kps, des, type);
+        return extractRobustFeatures(img, FeatureDetector.getInstance().distortImage(img), num, 300, type);
     }
 
     static public ImageFeature extractRobustFeatures(Mat img, List<Mat> distortedImg, int num, int disThd, DescriptorType type) {
         return extractRobustFeatures(img, distortedImg, num, disThd, type, null);
     }
-
     //Extract robust image feature points with customized setting
     static public ImageFeature extractRobustFeatures(Mat img, List<Mat> distortedImg, int num, int disThd, DescriptorType type, List<Integer> minTracker) {
-        MatOfKeyPoint kps = new MatOfKeyPoint();
-        Mat des = new Mat();
-//        FeatureDetector fd = new FeatureDetector(num);
-        FeatureDetector.getInstance().extractRobustFeatures(img, distortedImg, kps, des, type, num, disThd, minTracker);
-        return new ImageFeature(kps, des, type);
+        ImageFeature imageFeature = null;
+        switch (type) {
+            case SURF: imageFeature = extractSURFFeatures(img); break;
+            default:
+            case ORB: imageFeature = extractORBFeatures(img); break;
+        }
+        return extractRobustFeatures(imageFeature, distortedImg, num, disThd, type, minTracker);
     }
 
-    /*
-    Extract image feature points
-     */
-    static public ImageFeature extractRobustFeatures(Mat img) {
-        return extractRobustFeatures(img, 500, DescriptorType.ORB);
+    //Extract robust image feature points with customized setting
+    static public ImageFeature extractRobustFeatures(ImageFeature tIF, List<Mat> distortedImg, int num, int disThd, DescriptorType type, List<Integer> minTracker) {
+        MatOfKeyPoint kps = new MatOfKeyPoint();
+        kps.fromList(tIF.getObjectKeypoints().toList());
+        Mat des = new Mat();
+        tIF.getDescriptors().copyTo(des);
+        FeatureDetector.getInstance().extractRobustFeatures(distortedImg, kps, des, type, num, disThd, minTracker);
+        return new ImageFeature(kps, des, type);
     }
 
     /*

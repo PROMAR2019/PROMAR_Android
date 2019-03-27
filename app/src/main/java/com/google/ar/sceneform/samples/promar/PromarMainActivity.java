@@ -328,6 +328,7 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
 
                 }
                 else{
+                    rs=null;//delete previous data
                     onRecord = true;
                     runOnUiThread(()-> {
                         btn.setTag("Place VO");
@@ -568,6 +569,8 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
                 });
     }
 
+    long timeStamp = 0;
+    static private long kInterval = 500;
     void processImage(Bitmap bitmap) {
         if(bitmap==null) return;
 
@@ -591,6 +594,11 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
                 timestamp);
 //        trackingOverlay.postInvalidate();
         //System.arraycopy(originalLuminance, 0, luminanceCopy, 0, originalLuminance.length);
+
+        //stop the background thread when program is halted
+        if (System.currentTimeMillis() - timeStamp > kInterval && handler != null) {
+            timeStamp = System.currentTimeMillis();
+        } else return;
 
         final Canvas canvas = new Canvas(croppedBitmap);
 //        final Canvas canvas = new Canvas(rgbFrameBitmap);
@@ -693,7 +701,6 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
             Rect roi = new Rect(location.getLeftInt(), location.getTopInt(), location.getWidthInt(), location.getHeightInt());
             Mat tMat = new Mat(mat, roi);
 
-            //TODO:figure out if the orientation of the original image influence the final matching
             //At present the image is counter-clock rotated 90 degrees
 //            List<Mat> leftImgs = ImageProcessor.changeToLeftPerspective(tMat, 5f, 10);
 //            for (Mat i : leftImgs) {
@@ -705,24 +712,27 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
             data.append("\n" + r.getTitle() + "\t" + r.getConfidence() + "\t" + r.getUuid() //recognition
                     + "\t" + location.getTop() + "\t" + location.getLeft() + "\t" + location.getBottom() + "\t" + location.getRight()); //location
 
+            long startTime = System.currentTimeMillis();
             fs.saveFPtoFile( dirPath + "/" + r.getUuid() + "_left",
                     ImageProcessor.extractRobustFeatures(tMat, ImageProcessor.changeToLeftPerspective(tMat, 5f, 10),
-                            kTemplateFPNum, kDisThd, DescriptorType.ORB, null));
+                            (int)(1.2*kTemplateFPNum), kDisThd, DescriptorType.ORB, null));
             fs.saveFPtoFile( dirPath + "/" + r.getUuid() + "_right",
                     ImageProcessor.extractRobustFeatures(tMat, ImageProcessor.changeToRightPerspective(tMat, 5f, 10),
-                            kTemplateFPNum, kDisThd, DescriptorType.ORB, null));
+                            (int)(1.2*kTemplateFPNum), kDisThd, DescriptorType.ORB, null));
             fs.saveFPtoFile( dirPath + "/" + r.getUuid() + "_bottom",
                     ImageProcessor.extractRobustFeatures(tMat, ImageProcessor.changeToBottomPerspective(tMat, 5f, 10),
-                            kTemplateFPNum, kDisThd, DescriptorType.ORB, null));
+                            (int)(1.2*kTemplateFPNum), kDisThd, DescriptorType.ORB, null));
             fs.saveFPtoFile( dirPath + "/" + r.getUuid() + "_top",
                     ImageProcessor.extractRobustFeatures(tMat, ImageProcessor.changeToTopPerspective(tMat, 5f, 10),
-                            kTemplateFPNum, kDisThd, DescriptorType.ORB, null));
+                            (int)(1.2*kTemplateFPNum), kDisThd, DescriptorType.ORB, null));
             fs.saveFPtoFile( dirPath + "/" + r.getUuid() + "_scale_up",
                     ImageProcessor.extractRobustFeatures(tMat, ImageProcessor.scaleImage(tMat, 0.05f, 10),
-                            kTemplateFPNum, kDisThd, DescriptorType.ORB, null));
+                            (int)(1.2*kTemplateFPNum), kDisThd, DescriptorType.ORB, null));
             fs.saveFPtoFile( dirPath + "/" + r.getUuid() + "_scale_down",
-                    ImageProcessor.extractRobustFeatures(tMat, ImageProcessor.changeToTopPerspective(tMat, -0.05f, 10),
-                            kTemplateFPNum, kDisThd, DescriptorType.ORB, null));
+                    ImageProcessor.extractRobustFeatures(tMat, ImageProcessor.scaleImage(tMat, -0.05f, 10),
+                            (int)(1.2*kTemplateFPNum), kDisThd, DescriptorType.ORB, null));
+            long endTime = System.currentTimeMillis();
+            Log.d("ar_timer", String.format("saving time:%d", endTime-startTime));
         }
         MyUtils.writeToFile(dataFileName, data.toString(), this);
         runOnUiThread(()->{
@@ -735,6 +745,8 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
         onRecord = false;
 
     }
+
+    static float kConThd = 0.6f;
 
     private void retrieve(Bitmap img, List<Recognition> recognitions) {
 
@@ -764,6 +776,7 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
             ImageFeature qmIF = null;
             ImageFeature tmIF = null;
             for (Recognition r : recognitions) {
+                if (r.getConfidence()<kConThd) continue;
                 double mr=0; //temporarily save the matching ratio
                 if (recs.contains(r.getTitle())) {
                     BoxPosition location = r.getLocation();
@@ -910,6 +923,7 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
                 x= (finalVo_x-width/2)*dist_to_pixel;
                 y= (finalVo_y-height/2)*dist_to_pixel;
                 Log.d("match string",String.format("before placeAndy:%.02f,%.02f,%.02f",x,y,z));
+                if (Math.abs(x*y) > 1) return;
                 placeAndy(x, y, z);
                 onRetrieve=false;
 
