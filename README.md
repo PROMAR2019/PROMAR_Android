@@ -40,4 +40,4 @@ After the virtual object owner finished cooking, now it's time to serve it to th
 
 When the message "Data loaded" toasts on screen, scan the reference object and say hello to your new/old friend.
 
-<img src="https://github.com/PROMAR2019/PROMAR_Android/blob/master/img/step_4.png" width="400" height="600">
+<img src="https://github.com/PROMAR2019/PROMAR_Android/blob/master/img/step_4.png" width="380" height="630">
