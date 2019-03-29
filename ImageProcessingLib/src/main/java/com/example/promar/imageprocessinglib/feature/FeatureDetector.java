@@ -319,29 +319,29 @@ print out matching results
             }
             int max = 0;
             int maxKey = -1;
-            int min_start=0;
             for (int i : tracker.keySet()) {
                 int c = 0;  //count how many mins can get increased if this candidate is selected
                 Set<Integer> ts = tracker.get(i);
-                for(int ii:ts){
-                    for (int j=min_start;j<mins.size();j++) {
-                        int m=mins.get(j);
-                        if(m<ii) continue;
-                        if(m>ii){
-                            min_start=j;
-                            break;
-                        }
-                        if (ii == m) {
-                            c++;
-                            min_start=j+1;
-                            break;
-                        }
-                    }
-                }
-//                for (int m : mins) {
-//                    if (ts.contains(m))
-//                        c++;
+//                int min_start=0;
+//                for(int ii:ts){
+//                    for (int j=min_start;j<mins.size();j++) {
+//                        int m=mins.get(j);
+//                        if(m<ii) continue;
+//                        if(m>ii){
+//                            min_start=j;
+//                            break;
+//                        }
+//                        if (ii == m) {
+//                            c++;
+//                            min_start=j+1;
+//                            break;
+//                        }
+//                    }
 //                }
+                for (int m : mins) {
+                    if (ts.contains(m))
+                        c++;
+                }
                 if (c > max) {
                     max = c;
                     maxKey = i;
