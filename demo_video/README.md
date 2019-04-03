@@ -8,7 +8,7 @@ This directory contains the videos of how our PROMAR demo performs in different 
 ## Teddy bear(demo_2)
 ![](demo_2.gif)
 
-## Diing table(demo_3)
+## Dining table(demo_3)
 ![](demo_3.gif)
 
 ## Parking lot(demo_4)
