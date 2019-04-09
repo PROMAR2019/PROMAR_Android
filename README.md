@@ -1,6 +1,6 @@
 # PROMAR
 
-This is an implementation of [PROMAR](PROMAR.pdf) on Android. PROMAR aims at providing multi-user AR applications on off-the-shelf smartphones without special hardware. Our demo persuasively prove PROMAR capable of ofering consistent AR experience in regardless of moderate view angle changes and distance change.
+This is an implementation of [PROMAR](PROMAR.pdf) on Android. PROMAR aims at providing multi-user AR applications on off-the-shelf smartphones without special hardware. Our demo persuasively proves PROMAR capable of offering consistent AR experience in regardless of moderate view angle changes and distance change.
 
 ![](demo_video/demo_1.gif)
 
