@@ -86,6 +86,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.example.promar.imageprocessinglib.ImageProcessor;
 import com.example.promar.imageprocessinglib.ObjectDetector;
@@ -102,7 +103,7 @@ import com.example.promar.imageprocessinglib.model.Recognition;
 public class PromarMainActivity extends AppCompatActivity implements SensorEventListener, SavingFeatureDialog.OnFragmentInteractionListener {
     private  static final String TAG = "MAIN_DEBUG";
     private static final int OWNER_STATE=1, VIEWER_STATE=2;
-//    private static final String TAG = PromarMainActivity.class.getSimpleName();
+//    private static final String TAG = HelloSceneformActivity.class.getSimpleName();
     private static final double MIN_OPENGL_VERSION = 3.1;
 
     //fixed file name for storing metadata of image features and recognitions
@@ -126,7 +127,7 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
     private MyArFragment arFragment;
     private ModelRenderable andyRenderable;
 
-    private Session arSession;
+    private Session arSession;//added by bo
 
     private float last_chk_time=0;
     private boolean opencvLoaded=false;
@@ -200,39 +201,38 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
         Display display = this.getWindowManager().getDefaultDisplay();
         int stageWidth = display.getWidth();
         int stageHeight = display.getHeight();
-        Log.v("myTag","screen size "+Integer.toString(stageWidth)+","+Integer.toString(stageHeight));
 
         //ImageView imgview=findViewById(R.id.imgview);
 
         //imgview.setImageResource(R.drawable.ic_launcher);
 
-        arFragment.setActivity(this);
+        arFragment.setActivity(this);//add by bo
         arFragment.setOnFrameListener((frameTime, frame) -> {
             float curTime=frameTime.getStartSeconds();
             Bitmap bitmap=null;//Bitmap.createBitmap(previewWidth, previewHeight, Bitmap.Config.ARGB_8888);
             Image img=null;
             //if(curTime-last_chk_time<2) return;
-            if(frame==null) {Log.d("myTag","frame is null"); return;}
-            else Log.d("myTag","frame is not null");
+            if(frame==null) {Log.d(TAG,"frame is null"); return;}
             try {
-                Log.d("myTag","before acquire camera image");
                 img = frame.acquireCameraImage(); //catch the image from camera
                 String msg = img.getFormat()+":"+Integer.toString(img.getWidth())+","+Integer.toString(img.getHeight());
-                Log.d("myTag", msg);
                 //setImage(img);
 
-                //TODO: is the conversion done in correct way?
                 luminanceCopy = MyUtils.imageToByte(img); //convert image to byte[]
+
                 bitmap=MyUtils.imageToBitmap(img);
 
-                //To scale down the image
+                //added by bo to scale down the image
 //                bitmap=Bitmap.createScaledBitmap(bitmap, 360,640,false);
 
 
                 img.close();
                 //if(bitmap!=null) setImage(bitmap);
                 //else return;
-            }catch(Exception e){System.out.println("myTag"+e); return;}
+            }
+            catch(Exception e){
+                return;
+            }
 
 //            if(detector==null) initTF(bitmap);
             if(objectDetector==null) initTF(bitmap);
@@ -264,7 +264,6 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
                         return;
                     }
 
-                    Log.d("myTag","panel listener");
 
                     float x = motionEvent.getRawX();
                     float y = motionEvent.getRawY();
@@ -306,6 +305,7 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
 //                    double distance = Math.sqrt(dx * dx + dy * dy);
                 });
 
+        //added by bo
         Button recBtn = findViewById(R.id.record);  //record button
         Button rteBtn = findViewById(R.id.retrieve);    //retrieve button
         recBtn.setTag("Place VO");
@@ -456,6 +456,7 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
 
     void loadData() {
         if (rs==null) {
+            long startTime = System.currentTimeMillis();
             FeatureStorage fs = new FeatureStorage();
             String data = MyUtils.readFromFile(dataFileName, this);
             rs = new HashMap<>();
@@ -491,6 +492,7 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
                 //bs.put(rec[0],new BoxPosition(new Float(rec[4]), new Float(rec[3]),
                 //        new Float(rec[6])-new Float(rec[4]),new Float(rec[5])-new Float(rec[3])));
             }
+            long endTime = System.currentTimeMillis();
         }
         runOnUiThread(()->{
             Toast.makeText(getApplicationContext(), "Data loaded", Toast.LENGTH_SHORT).show();
@@ -571,6 +573,7 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
 
     long timeStamp = 0;
     static private long kInterval = 500;
+
     void processImage(Bitmap bitmap) {
         if(bitmap==null) return;
 
@@ -581,7 +584,6 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
 
         if (luminanceCopy == null) {
             //luminanceCopy = new byte[originalLuminance.length];
-            Log.d("myTag","luminanceCopy is null");
             return;
         }
 
@@ -616,28 +618,23 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
                     @Override
                     public void run() {
 
-                        Log.d("myTag","before recognizeimage");
                         final long startTime = System.currentTimeMillis();
                         final List<Recognition> results = objectDetector.recognizeImage(croppedBitmap);
 //                        final List<Recognition> results = objectDetector.recognizeImage(rgbFrameBitmap);
                         long endTime = System.currentTimeMillis();
-                        Log.d(TAG, "Recognition number:\t" + results.size() + " time:\t"+(endTime-startTime));
 //
                         org.opencv.core.Rect roi = new org.opencv.core.Rect();
 //
-//                        Log.d("myTag",str);
                         for (final Recognition result : results) {
                             BoxPosition pos = result.getLocation();
                             final RectF location = new RectF(pos.getLeft(), pos.getTop(), pos.getRight(), pos.getBottom());
 //                            roi = new org.opencv.core.Rect((int)location.left, (int)location.top, (int)(location.right - location.left), (int)(location.bottom - location.top));
-//                            Log.d(TAG, "main: rect before transform " + location.toString());
                             cropToFrameTransform.mapRect(location);
                             roi = new org.opencv.core.Rect((int)location.left, (int)location.top, (int)(location.right - location.left), (int)(location.bottom - location.top));
                             result.setLocation(new BoxPosition(location.left, location.top, location.width(), location.height()));
                         }
 
                         if (results.size() > 0) {
-                            Log.d("myTag","result size >0:"+Integer.toString(results.size()));
 
                             if (onRecord) {
                                 record(copyBitmp, results);
@@ -668,7 +665,6 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
 //                        mappedRecognitions.add(result);
 
 //                        str=String.format("mapped:%d, cropped image size(%d, %d)",mappedRecognitions.size(), bitmap.getWidth(), bitmap.getHeight());
-//                        Log.d("myTag",str);
 //                        tracker.trackResults(mappedRecognitions, luminanceCopy, currTimestamp);
                         tracker.trackResults(results, luminanceCopy, currTimestamp);
 //                        if (mappedRecognitions.size() > 0)
@@ -689,68 +685,82 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
         });
 
         setAngle();
-        FeatureStorage fs = new FeatureStorage();
+//        FeatureStorage fs = new FeatureStorage();
         Mat mat = new Mat();
         Utils.bitmapToMat(img, mat);
         StringBuilder data = new StringBuilder();
         data.append(refRD);
         data.append(" " + img.getWidth() + " " + img.getHeight()+" " + VO_dist);
         String dirPath = getFilesDir().getPath();
+        AtomicInteger c = new AtomicInteger(0); //used to count the completed threads
+
         for (Recognition r : recognitions) {
             BoxPosition location = r.getLocation();
             Rect roi = new Rect(location.getLeftInt(), location.getTopInt(), location.getWidthInt(), location.getHeightInt());
             Mat tMat = new Mat(mat, roi);
 
-            //At present the image is counter-clock rotated 90 degrees
-//            List<Mat> leftImgs = ImageProcessor.changeToLeftPerspective(tMat, 5f, 10);
-//            for (Mat i : leftImgs) {
-//                Bitmap bitmap=Bitmap.createBitmap(i.cols(),  i.rows(), Bitmap.Config.ARGB_8888);
-//                Utils.matToBitmap(i,bitmap);
-//                int k = 0;
-//            }
-
             data.append("\n" + r.getTitle() + "\t" + r.getConfidence() + "\t" + r.getUuid() //recognition
                     + "\t" + location.getTop() + "\t" + location.getLeft() + "\t" + location.getBottom() + "\t" + location.getRight()); //location
 
-            long startTime = System.currentTimeMillis();
-            fs.saveFPtoFile( dirPath + "/" + r.getUuid() + "_left",
-                    ImageProcessor.extractRobustFeatures(tMat, ImageProcessor.changeToLeftPerspective(tMat, 5f, 10),
-                            (int)(1.2*kTemplateFPNum), kDisThd, DescriptorType.ORB, null));
-            fs.saveFPtoFile( dirPath + "/" + r.getUuid() + "_right",
-                    ImageProcessor.extractRobustFeatures(tMat, ImageProcessor.changeToRightPerspective(tMat, 5f, 10),
-                            (int)(1.2*kTemplateFPNum), kDisThd, DescriptorType.ORB, null));
+            new Thread(() -> {
+                FeatureStorage fs = new FeatureStorage();
+                fs.saveFPtoFile( dirPath + "/" + r.getUuid() + "_left",
+                        ImageProcessor.extractRobustFeatures(tMat, ImageProcessor.changeToLeftPerspective(tMat, 5f, 10),
+                                kTemplateFPNum, kDisThd, DescriptorType.ORB, null));
+                fs.saveFPtoFile( dirPath + "/" + r.getUuid() + "_right",
+                        ImageProcessor.extractRobustFeatures(tMat, ImageProcessor.changeToRightPerspective(tMat, 5f, 10),
+                                kTemplateFPNum, kDisThd, DescriptorType.ORB, null));
+                c.getAndIncrement();
+            }).start();
+            new Thread(() -> {
+                FeatureStorage fs = new FeatureStorage();
             fs.saveFPtoFile( dirPath + "/" + r.getUuid() + "_bottom",
                     ImageProcessor.extractRobustFeatures(tMat, ImageProcessor.changeToBottomPerspective(tMat, 5f, 10),
-                            (int)(1.2*kTemplateFPNum), kDisThd, DescriptorType.ORB, null));
-            fs.saveFPtoFile( dirPath + "/" + r.getUuid() + "_top",
-                    ImageProcessor.extractRobustFeatures(tMat, ImageProcessor.changeToTopPerspective(tMat, 5f, 10),
-                            (int)(1.2*kTemplateFPNum), kDisThd, DescriptorType.ORB, null));
-            fs.saveFPtoFile( dirPath + "/" + r.getUuid() + "_scale_up",
-                    ImageProcessor.extractRobustFeatures(tMat, ImageProcessor.scaleImage(tMat, 0.05f, 10),
-                            (int)(1.2*kTemplateFPNum), kDisThd, DescriptorType.ORB, null));
-            fs.saveFPtoFile( dirPath + "/" + r.getUuid() + "_scale_down",
-                    ImageProcessor.extractRobustFeatures(tMat, ImageProcessor.scaleImage(tMat, -0.05f, 10),
-                            (int)(1.2*kTemplateFPNum), kDisThd, DescriptorType.ORB, null));
-            long endTime = System.currentTimeMillis();
-            Log.d("ar_timer", String.format("saving time:%d", endTime-startTime));
+                            kTemplateFPNum, kDisThd, DescriptorType.ORB, null));
+                fs.saveFPtoFile( dirPath + "/" + r.getUuid() + "_top",
+                        ImageProcessor.extractRobustFeatures(tMat, ImageProcessor.changeToTopPerspective(tMat, 5f, 10),
+                                kTemplateFPNum, kDisThd, DescriptorType.ORB, null));
+                c.getAndIncrement();
+            }).start();
+            new Thread(() -> {
+                FeatureStorage fs = new FeatureStorage();
+                fs.saveFPtoFile( dirPath + "/" + r.getUuid() + "_scale_up",
+                        ImageProcessor.extractRobustFeatures(tMat, ImageProcessor.scaleImage(tMat, 0.05f, 10),
+                                kTemplateFPNum, kDisThd, DescriptorType.ORB, null));
+                fs.saveFPtoFile( dirPath + "/" + r.getUuid() + "_scale_down",
+                        ImageProcessor.extractRobustFeatures(tMat, ImageProcessor.changeToTopPerspective(tMat, -0.05f, 10),
+                                kTemplateFPNum, kDisThd, DescriptorType.ORB, null));
+                c.getAndIncrement();
+            }).start();
         }
         MyUtils.writeToFile(dataFileName, data.toString(), this);
-        runOnUiThread(()->{
-            Toast.makeText(getApplicationContext(), "Image features saved", Toast.LENGTH_SHORT).show();
-            FragmentManager fm=getFragmentManager();
-            SavingFeatureDialog sf=(SavingFeatureDialog)fm.findFragmentByTag("sf_dialog");
-            if(sf!=null) sf.dismiss();;
 
-        });
+        int count = 3*recognitions.size();
+        Handler handler = new Handler();
+        int kInterval = 2;
+
+        Runnable statusCheck = new Runnable() {
+            @Override
+            public void run() {
+                if (c.get() >= count) {
+                    runOnUiThread(()->{
+                        Toast.makeText(getApplicationContext(), "Image features saved", Toast.LENGTH_SHORT).show();
+                        FragmentManager fm=getFragmentManager();
+                        SavingFeatureDialog sf=(SavingFeatureDialog)fm.findFragmentByTag("sf_dialog");
+                        if(sf!=null) sf.dismiss();;
+                    });
+                }
+                else handler.postDelayed(this, kInterval);
+            }
+        };
+        statusCheck.run();
+
         onRecord = false;
-
     }
 
     static float kConThd = 0.6f;
 
     private void retrieve(Bitmap img, List<Recognition> recognitions) {
-
-        Log.d("match strings","enter retrieve method");
 
         double mr_th=0.15; //matching ratio threshold
         boolean match=false;
@@ -770,7 +780,6 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
             sb.append("angle difference larger than 90 degree");
         else {
             int count_r=0;
-            Log.d("match strings","recognized "+Integer.toString(recognitions.size())+" items");
 
             MatOfDMatch m = null;
             ImageFeature qmIF = null;
@@ -802,8 +811,12 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
                             ifs.add(ts.get(5));
                         else ifs.add(ts.get(4));
 
+                        long startTime = System.currentTimeMillis();
+
                         ImageFeature tIF = constructTemplateFP(ifs, new float[]{Math.abs(hd)/45, Math.abs(vd)/45, Math.abs(area_ratio-1)}, kTemplateFPNum);
-                        MatOfDMatch matches = ImageProcessor.matchWithRegression(qIF, tIF, 5, 300, 20);
+                        MatOfDMatch matches = ImageProcessor.matchWithRegression(qIF, tIF, 5, 400, 20);
+
+                        long endTime = System.currentTimeMillis();
 
                         double tmr = (double) matches.total() / tIF.getSize();
                         sb.append(r.getTitle() + " " + tmr + ",");
@@ -846,11 +859,7 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
                         }
                         float dx = (float)(imgSize.height/2 -(tmax_x+tmin_x)/2);
                         float dy = (float)(imgSize.width/2 -(tmax_y+tmin_y)/2);
-                        Log.d("match string",String.format("dx:%.02f,dy:%.02f",dx,dy));
                         float r_scale = (float)((tmax_x-tmin_x) / (qmax_x-qmin_x) + (tmax_y-tmin_y) / (qmax_y-qmin_y)) / 2;
-                        Log.d("match string",String.format("Scale:%.02f,%.02f\t%.02f",(tmax_x-tmin_x) / (qmax_x-qmin_x), (tmax_y-tmin_y) / (qmax_y-qmin_y),r_scale));
-                        Log.d("match string",String.format("qmin:(%.02f,%.02f)\tqmax:(%.02f,%.02f)\ttmin(%.02f,%.02f)\ttmax(%.02f,%.02f)",
-                                qmin_x, qmin_y, qmax_x, qmax_y, tmin_x, tmin_y, tmax_x, tmax_y));
                         float r_center_x = (float)(qmax_x+qmin_x) / 2;
                         float r_center_y = (float)(qmax_y+qmin_y) / 2;
 
@@ -858,15 +867,12 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
 
 //                        float img_center_y = (float) imgSize.width / 2;
 //                        float img_center_x = (float) imgSize.height / 2;
-//                        Log.d("match string",String.format("center.x:%.02f,center.y:%.02f",img_center_x,img_center_y));
 //
 //                        float box_center_x = bp.getLeft() + bp.getWidth() / 2;
 //                        float box_center_y = bp.getTop() + bp.getHeight() / 2;
 //                        float dx = img_center_x - box_center_x;
 //                        float dy = img_center_y - box_center_y;
-//                        Log.d("match string",String.format("dx:%.02f,dy:%.02f",dx,dy));
 //                        float r_scale = (bp.getWidth() / location.getWidth() + bp.getHeight() / location.getHeight()) / 2;
-//                        Log.d("match string",String.format("Scale:%.02f,%.02f\t%.02f",bp.getWidth() / location.getWidth(), bp.getHeight() / location.getHeight(),r_scale));
 //
 //                        float r_center_x = location.getLeft() + location.getWidth() / 2;
 //                        float r_center_y = location.getTop() + location.getHeight() / 2;
@@ -874,24 +880,21 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
                         vo_x = r_center_x + dx * r_scale;
                         vo_y = r_center_y + dy * r_scale;
                         scale = r_scale;
-                        //count_r++;
+                        count_r++;
                     }
                 }
             }
-            /*
             if(match) {
                 vo_x = vo_x / count_r;
                 vo_y = vo_y / count_r;
                 scale= scale / count_r;
-            }*/
+            }
         }
-        Log.d("match strings",sb.toString());
         if(match) {
 
             float finalScale = scale;
             float finalVo_x = vo_x;
             float finalVo_y = vo_y;
-            Log.d("match strings","scale:"+Float.toString(finalScale)+" "+Float.toString(finalVo_x)+" "+Float.toString(finalVo_y));
 
 
             runOnUiThread(() -> {
@@ -910,8 +913,6 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
                 float x,y,z;
                 float v_dist_center_x=(float) (width/2/Math.tan(h_viewangle/2/180*Math.PI)); //virtual distance to the center of the cameraview
                 float v_dist_center_y=(float) (height/2/Math.tan(v_viewangle/2/180*Math.PI)); //virtual distance to the center of the cameraview
-                Log.d("match string",String.format("width:%.02f,height:%.02f",width, height));
-                Log.d("match string","dist_center:"+Float.toString(v_dist_center_x)+" "+Float.toString(v_dist_center_y));
                 float v_dist=v_dist_center_x;//(v_dist_center_x+v_dist_center_y)/2; //distance in units of pixels
                 float v_dist_center= (float)Math.sqrt((finalVo_x -width/2)*(finalVo_x -width/2)+(finalVo_y -height/2)*(finalVo_y -height/2));
                 float v_angle=(float)Math.atan(v_dist_center/v_dist);
@@ -922,7 +923,7 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
                 z = -v_dist*dist_to_pixel;
                 x= (finalVo_x-width/2)*dist_to_pixel;
                 y= (finalVo_y-height/2)*dist_to_pixel;
-                Log.d("match string",String.format("before placeAndy:%.02f,%.02f,%.02f",x,y,z));
+                //prevent unrealistic cases
                 if (Math.abs(x*y) > 1) return;
                 placeAndy(x, y, z);
                 onRetrieve=false;
@@ -1097,8 +1098,8 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
         return new ImageFeature(tKP, des, tIFs.get(0).getDescriptorType());
     }
 
+    //added by bo
     public void onPeekTouch (){
-        Log.d("myTag","on peek touch");
 
         return;
 /*
@@ -1111,24 +1112,16 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
         Pose mCameraRelativePose= Pose.makeTranslation(0.0f, 0.0f, -1f);
         arSession = arFragment.getArSceneView().getSession();
 
-        if(mCameraRelativePose==null) Log.d("myTag","pose is null");
-        else Log.d("myTag","pose is not null");
 
-        if(arSession==null) Log.d("myTag","arSession is null");
         Pose cPose = camera.getPose().compose(mCameraRelativePose).extractTranslation();
         if(cPose!=null)
-            Log.d("myTag","camera pose is not null" + cPose.toString());
         Anchor anchor=arSession.createAnchor(cPose);
 
-        if(anchor==null) Log.d("myTag","anchor is null");
-        else Log.d("myTag","anchor is not null");
 
-        Log.d("myTag","step 1");
         //copy&paste
         AnchorNode anchorNode = new AnchorNode(anchor);
         anchorNode.setParent(arFragment.getArSceneView().getScene());
 
-        Log.d("myTag","step 2");
 
         // Create the transformable andy and add it to the anchor.
         TransformableNode andy = new TransformableNode(arFragment.getTransformationSystem());
@@ -1149,24 +1142,12 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
         Pose mCameraRelativePose= Pose.makeTranslation(0.0f, 0.0f, -1f);
         arSession = arFragment.getArSceneView().getSession();
 
-        if(mCameraRelativePose==null) Log.d("myTag","pose is null");
-        else Log.d("myTag","pose is not null");
 
-        if(arSession==null) Log.d("myTag","arSession is null");
         Pose cPose = camera.getPose().compose(mCameraRelativePose).extractTranslation();
-        if(cPose!=null)
-            Log.d("myTag","camera pose is not null" + cPose.toString());
         Anchor anchor=arSession.createAnchor(cPose);
-
-        if(anchor==null) Log.d("myTag","anchor is null");
-        else Log.d("myTag","anchor is not null");
-
-        Log.d("myTag","step 1");
         //copy&paste
         AnchorNode anchorNode = new AnchorNode(anchor);
         anchorNode.setParent(arFragment.getArSceneView().getScene());
-
-        Log.d("myTag","step 2");
 
         // Create the transformable andy and add it to the anchor.
         if(andy==null) andy = new TransformableNode(arFragment.getTransformationSystem());
@@ -1184,7 +1165,6 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
 
         float y=(float) (dist*Math.tan(Math.PI/6));
         Pose mCameraRelativePose= Pose.makeTranslation(0.0f, 0, -dist);
-        //Log.d("myTag","dist:"+Float.toString(dist)+", y:"+Float.toString(y));
 
         Pose cPose = camera.getPose().compose(mCameraRelativePose).extractTranslation();
         Anchor anchor=arSession.createAnchor(cPose);
@@ -1229,7 +1209,6 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
      */
     public static boolean checkIsSupportedDeviceOrFinish(final Activity activity) {
         if (Build.VERSION.SDK_INT < VERSION_CODES.N) {
-            Log.e(TAG, "Sceneform requires Android N or later");
             Toast.makeText(activity, "Sceneform requires Android N or later", Toast.LENGTH_LONG).show();
             activity.finish();
             return false;
@@ -1259,19 +1238,15 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
     }
 
     void setImage(Image image){
-        Log.d("myTag", Boolean.toString(opencvLoaded));
         if(!opencvLoaded) return;
         Mat mat=  MyUtils.imageToMat(image);
-        Log.d("myTag","imageToMat");
 
         //ImageView imgview=findViewById(R.id.imgview);
 //      Bitmap bitmap=Bitmap.createBitmap(image.getWidth(),  image.getHeight(),Bitmap.Config.ARGB_8888);
         Bitmap bitmap=Bitmap.createBitmap(mat.cols(),  mat.rows(), Bitmap.Config.ARGB_8888);
 
-        Log.d("myTag","create a bitmap done");
         Utils.matToBitmap(mat,bitmap);
 
-        Log.d("myTag","mat to bitmap");
 
         Matrix matrix = new Matrix();
         matrix.postRotate(90);
@@ -1279,7 +1254,6 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
         Bitmap rotatedBitmap = Bitmap.createBitmap(bitmap , 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
 
         //imgview.setImageBitmap(rotatedBitmap);
-        Log.d("myTag","set bitmap image");
     }
 
 
@@ -1291,12 +1265,10 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
             switch (status) {
                 case LoaderCallbackInterface.SUCCESS:
                 {
-                    Log.i("myTag", "OpenCV loaded successfully");
                     opencvLoaded=true;
                 } break;
                 default:
                 {
-                    Log.i("myTag", "OpenCV load default");
                     super.onManagerConnected(status);
                 } break;
             }
@@ -1325,13 +1297,15 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
     @Override
     public synchronized void onPause() {
 
-        handlerThread.quitSafely();
+//        handlerThread.quitSafely();
+        handlerThread.quit();
         try {
             handlerThread.join();
             handlerThread = null;
             handler = null;
         } catch (final InterruptedException e) {
 //            LOGGER.e(e, "Exception!");
+           Log.e(TAG, "Can't stop handler thread");
         }
         arFragment.onPause();
 

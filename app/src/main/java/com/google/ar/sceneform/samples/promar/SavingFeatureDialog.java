@@ -4,10 +4,12 @@ import android.app.DialogFragment;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 
 /**
@@ -18,47 +20,53 @@ import android.view.ViewGroup;
  * Use the {@link SavingFeatureDialog#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class SavingFeatureDialog extends DialogFragment {
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+public class SavingFeatureDialog extends DialogFragment{
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
 
     private OnFragmentInteractionListener mListener;
+    private Integer count=0;
+    private TextView countTextView;
 
+
+    private Thread timer_thread;
+
+    public Handler threadHandler = new Handler(){
+        public void handleMessage (android.os.Message message){
+            if(getView()==null) return;
+            countTextView = (TextView) getView().findViewById(R.id.sftext);
+            if(countTextView!=null) countTextView.setText("Saving features... "+Float.toString((float)count/10)+"s");
+        }
+
+    };
     public SavingFeatureDialog() {
         // Required empty public constructor
+
+        timer_thread=new Thread(
+                new Runnable() {
+                    private static final int DELAY = 100;
+                    @Override
+                    public void run() {
+                        try {
+                            while (true) {
+                                count ++;
+                                Thread.sleep (DELAY);
+                                threadHandler.sendEmptyMessage(0);
+                            }
+                        } catch (InterruptedException e){
+                            e.printStackTrace();
+                        }
+                    }
+                }
+
+        );
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment SavingFeatureDialog.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static SavingFeatureDialog newInstance(String param1, String param2) {
-        SavingFeatureDialog fragment = new SavingFeatureDialog();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
+
     }
 
     @Override
@@ -84,12 +92,15 @@ public class SavingFeatureDialog extends DialogFragment {
             throw new RuntimeException(context.toString()
                     + " must implement OnFragmentInteractionListener");
         }
+
+        timer_thread.start();
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
         mListener = null;
+        timer_thread.interrupt();
     }
 
     /**

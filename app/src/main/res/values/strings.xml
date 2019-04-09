@@ -14,7 +14,7 @@
    limitations under the License.
 -->
 <resources>
-    <string name="app_name">Promar</string>
+    <string name="app_name">PROMAR</string>
     <string name="record">Record</string>
     <string name="retrieve">Retrieve</string>
     <string name="angle">angle</string>
