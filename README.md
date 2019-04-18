@@ -41,3 +41,10 @@ After the virtual object owner finished cooking, now it's time to serve it to th
 When the message "Data loaded" toasts on screen, scan the reference object and say hello to your new/old friend.
 
 <img src="https://github.com/PROMAR2019/PROMAR_Android/blob/master/img/step_4.png" width="370" height="640">
+
+
+# Time Consumption
+
+Below is the average time consumption of each step in PROMAR running on OnePlus 5.
+
+<img src="https://github.com/PROMAR2019/PROMAR_Android/blob/master/img/time.png" width="640" height="370">
