@@ -47,4 +47,4 @@ When the message "Data loaded" toasts on screen, scan the reference object and s
 
 Below is the average time consumption of each step in PROMAR running on OnePlus 5.
 
-<img src="https://github.com/PROMAR2019/PROMAR_Android/blob/master/img/time.png" width="640" height="370">
+<img src="https://github.com/PROMAR2019/PROMAR_Android/blob/master/img/time.png" width="640" height="450">
