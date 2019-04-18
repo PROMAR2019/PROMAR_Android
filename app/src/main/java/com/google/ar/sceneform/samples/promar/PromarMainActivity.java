@@ -728,7 +728,7 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
                         ImageProcessor.extractRobustFeatures(tMat, ImageProcessor.scaleImage(tMat, 0.05f, 10),
                                 kTemplateFPNum, kDisThd, DescriptorType.ORB, null));
                 fs.saveFPtoFile( dirPath + "/" + r.getUuid() + "_scale_down",
-                        ImageProcessor.extractRobustFeatures(tMat, ImageProcessor.changeToTopPerspective(tMat, -0.05f, 10),
+                        ImageProcessor.extractRobustFeatures(tMat, ImageProcessor.scaleImage(tMat, -0.05f, 10),
                                 kTemplateFPNum, kDisThd, DescriptorType.ORB, null));
                 c.getAndIncrement();
             }).start();
