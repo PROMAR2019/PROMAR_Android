@@ -456,7 +456,6 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
 
     void loadData() {
         if (rs==null) {
-            long startTime = System.currentTimeMillis();
             FeatureStorage fs = new FeatureStorage();
             String data = MyUtils.readFromFile(dataFileName, this);
             rs = new HashMap<>();
@@ -492,7 +491,6 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
                 //bs.put(rec[0],new BoxPosition(new Float(rec[4]), new Float(rec[3]),
                 //        new Float(rec[6])-new Float(rec[4]),new Float(rec[5])-new Float(rec[3])));
             }
-            long endTime = System.currentTimeMillis();
         }
         runOnUiThread(()->{
             Toast.makeText(getApplicationContext(), "Data loaded", Toast.LENGTH_SHORT).show();
@@ -859,6 +857,10 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
                         }
                         float dx = (float)(imgSize.height/2 -(tmax_x+tmin_x)/2);
                         float dy = (float)(imgSize.width/2 -(tmax_y+tmin_y)/2);
+                        double radiant_v = vd/180*Math.PI;
+                        double radiant_h = hd/180*Math.PI;
+                        dy = dy/(float)Math.cos(Math.abs(radiant_v));
+                        dx = dx/(float)Math.cos(Math.abs(radiant_h));
                         float r_scale = (float)((tmax_x-tmin_x) / (qmax_x-qmin_x) + (tmax_y-tmin_y) / (qmax_y-qmin_y)) / 2;
                         float r_center_x = (float)(qmax_x+qmin_x) / 2;
                         float r_center_y = (float)(qmax_y+qmin_y) / 2;
@@ -877,14 +879,14 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
 //                        float r_center_x = location.getLeft() + location.getWidth() / 2;
 //                        float r_center_y = location.getTop() + location.getHeight() / 2;
 
-                        vo_x = r_center_x + dx * r_scale;
-                        vo_y = r_center_y + dy * r_scale;
-                        scale = r_scale;
+                        vo_x += r_center_x + dx * r_scale;
+                        vo_y += r_center_y + dy * r_scale;
+                        scale += r_scale;
                         count_r++;
                     }
                 }
             }
-            if(match) {
+            if(match) {//use average value for multiple recognitions
                 vo_x = vo_x / count_r;
                 vo_y = vo_y / count_r;
                 scale= scale / count_r;
@@ -916,8 +918,8 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
                 float v_dist=v_dist_center_x;//(v_dist_center_x+v_dist_center_y)/2; //distance in units of pixels
                 float v_dist_center= (float)Math.sqrt((finalVo_x -width/2)*(finalVo_x -width/2)+(finalVo_y -height/2)*(finalVo_y -height/2));
                 float v_angle=(float)Math.atan(v_dist_center/v_dist);
-                float x_angle= (float)Math.atan((finalVo_x -width/2)/v_dist);//x angle of the VO
-                float y_angle= (float)Math.atan((finalVo_y -height/2)/v_dist);
+//                float x_angle= (float)Math.atan((finalVo_x -width/2)/v_dist);//x angle of the VO
+//                float y_angle= (float)Math.atan((finalVo_y -height/2)/v_dist);
 
                 float dist_to_pixel= (float) (VO_dist_for_viewer * finalScale * Math.cos(v_angle) / v_dist);
                 z = -v_dist*dist_to_pixel;
