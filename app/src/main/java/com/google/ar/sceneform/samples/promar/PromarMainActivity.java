@@ -103,7 +103,6 @@ import com.example.promar.imageprocessinglib.model.Recognition;
 public class PromarMainActivity extends AppCompatActivity implements SensorEventListener, SavingFeatureDialog.OnFragmentInteractionListener {
     private  static final String TAG = "MAIN_DEBUG";
     private static final int OWNER_STATE=1, VIEWER_STATE=2;
-//    private static final String TAG = HelloSceneformActivity.class.getSimpleName();
     private static final double MIN_OPENGL_VERSION = 3.1;
 
     //fixed file name for storing metadata of image features and recognitions
@@ -115,8 +114,7 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
 
     private float v_viewangle=60, h_viewangle=48;
 
-    private float VO_dist=0, VO_dist_for_viewer=0;
-
+    private float VO_dist=0, VO_dist_for_viewer=0, v_dist=0;
 
     //image recognition object as key, value is a list of image features list recognized as this object by TF.
     //Each element is a distortion robust image feature, sorted as left, right, top and bottom
@@ -127,11 +125,11 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
     private MyArFragment arFragment;
     private ModelRenderable andyRenderable;
 
-    private Session arSession;//added by bo
+    private Session arSession;
 
     private float last_chk_time=0;
     private boolean opencvLoaded=false;
-//    private Classifier classifier;
+    //    private Classifier classifier;
     private ObjectDetector objectDetector;
 
     private OverlayView trackingOverlay;
@@ -163,7 +161,7 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
     private byte[] luminanceCopy;
     private List<Recognition> recognitions;
 
-//    private Classifier detector;
+    //    private Classifier detector;
     private BorderedText borderedText;
 
     static Boolean onRecord = false;
@@ -206,7 +204,7 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
 
         //imgview.setImageResource(R.drawable.ic_launcher);
 
-        arFragment.setActivity(this);//add by bo
+        arFragment.setActivity(this);
         arFragment.setOnFrameListener((frameTime, frame) -> {
             float curTime=frameTime.getStartSeconds();
             Bitmap bitmap=null;//Bitmap.createBitmap(previewWidth, previewHeight, Bitmap.Config.ARGB_8888);
@@ -222,7 +220,6 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
 
                 bitmap=MyUtils.imageToBitmap(img);
 
-                //added by bo to scale down the image
 //                bitmap=Bitmap.createScaledBitmap(bitmap, 360,640,false);
 
 
@@ -235,7 +232,10 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
             }
 
 //            if(detector==null) initTF(bitmap);
-            if(objectDetector==null) initTF(bitmap);
+            if(objectDetector==null) {
+                initTF(bitmap);
+                initDistParameters();
+            }
 
             processImage(bitmap);
 
@@ -305,7 +305,6 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
 //                    double distance = Math.sqrt(dx * dx + dy * dy);
                 });
 
-        //added by bo
         Button recBtn = findViewById(R.id.record);  //record button
         Button rteBtn = findViewById(R.id.retrieve);    //retrieve button
         recBtn.setTag("Place VO");
@@ -497,6 +496,17 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
             Button btn= findViewById(R.id.retrieve);
             btn.setEnabled(true);
         });
+    }
+
+    void initDistParameters() {
+        float width=previewHeight;
+        float height=previewWidth;
+        float v_dist_center_x=(float) (width/2/Math.tan(h_viewangle/2/180*Math.PI)); //virtual distance to the center of the cameraview
+        float v_dist_center_y=(float) (height/2/Math.tan(v_viewangle/2/180*Math.PI)); //virtual distance to the center of the cameraview
+        Log.d("match_strings",String.format("width:%.02f,height:%.02f",width, height));
+        Log.d("match_strings","dist_center:"+Float.toString(v_dist_center_x)+" "+Float.toString(v_dist_center_y));
+        //TODO:how about adding v_dist_center_y? Why their value varied so much
+        v_dist=v_dist_center_x;//(v_dist_center_x+v_dist_center_y)/2; //distance in units of pixels
     }
 
     void initTF(Bitmap bitmap) {
@@ -857,27 +867,14 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
                         }
                         float dx = (float)(imgSize.height/2 -(tmax_x+tmin_x)/2);
                         float dy = (float)(imgSize.width/2 -(tmax_y+tmin_y)/2);
-                        double radiant_v = vd/180*Math.PI;
-                        double radiant_h = hd/180*Math.PI;
-                        dy = dy/(float)Math.cos(Math.abs(radiant_v));
-                        dx = dx/(float)Math.cos(Math.abs(radiant_h));
                         float r_scale = (float)((tmax_x-tmin_x) / (qmax_x-qmin_x) + (tmax_y-tmin_y) / (qmax_y-qmin_y)) / 2;
                         float r_center_x = (float)(qmax_x+qmin_x) / 2;
                         float r_center_y = (float)(qmax_y+qmin_y) / 2;
 
-
-
-//                        float img_center_y = (float) imgSize.width / 2;
-//                        float img_center_x = (float) imgSize.height / 2;
-//
-//                        float box_center_x = bp.getLeft() + bp.getWidth() / 2;
-//                        float box_center_y = bp.getTop() + bp.getHeight() / 2;
-//                        float dx = img_center_x - box_center_x;
-//                        float dy = img_center_y - box_center_y;
-//                        float r_scale = (bp.getWidth() / location.getWidth() + bp.getHeight() / location.getHeight()) / 2;
-//
-//                        float r_center_x = location.getLeft() + location.getWidth() / 2;
-//                        float r_center_y = location.getTop() + location.getHeight() / 2;
+                        double radiant_v = vd/180*Math.PI;
+                        double radiant_h = hd/180*Math.PI;
+                        dy = angleChangeHelper(dy, r_center_y, r_scale, (float)radiant_v);
+                        dx = angleChangeHelper(dx, r_center_x, r_scale, (float)radiant_h);
 
                         vo_x += r_center_x + dx * r_scale;
                         vo_y += r_center_y + dy * r_scale;
@@ -900,8 +897,6 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
 
 
             runOnUiThread(() -> {
-                TextView tv = findViewById(R.id.mratio);
-                tv.setText(sb.toString());
 
 //                DisplayMetrics displayMetrics = new DisplayMetrics();
 //                getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
@@ -910,28 +905,38 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
 
                 float width=previewHeight;
                 float height=previewWidth;
-//                float width=imgSize.height;
-//                float height=imgSize.width;
-                float x,y,z;
-                float v_dist_center_x=(float) (width/2/Math.tan(h_viewangle/2/180*Math.PI)); //virtual distance to the center of the cameraview
-                float v_dist_center_y=(float) (height/2/Math.tan(v_viewangle/2/180*Math.PI)); //virtual distance to the center of the cameraview
-                float v_dist=v_dist_center_x;//(v_dist_center_x+v_dist_center_y)/2; //distance in units of pixels
                 float v_dist_center= (float)Math.sqrt((finalVo_x -width/2)*(finalVo_x -width/2)+(finalVo_y -height/2)*(finalVo_y -height/2));
                 float v_angle=(float)Math.atan(v_dist_center/v_dist);
 //                float x_angle= (float)Math.atan((finalVo_x -width/2)/v_dist);//x angle of the VO
 //                float y_angle= (float)Math.atan((finalVo_y -height/2)/v_dist);
 
+                float x,y,z;
                 float dist_to_pixel= (float) (VO_dist_for_viewer * finalScale * Math.cos(v_angle) / v_dist);
                 z = -v_dist*dist_to_pixel;
                 x= (finalVo_x-width/2)*dist_to_pixel;
                 y= (finalVo_y-height/2)*dist_to_pixel;
+                Log.d("match_strings",String.format("before placeAndy:%.02f,%.02f,%.02f",x,y,z));
                 //prevent unrealistic cases
                 if (Math.abs(x*y) > 1) return;
                 placeAndy(x, y, z);
                 onRetrieve=false;
 
+                TextView tv = findViewById(R.id.mratio);
+                tv.setText(sb.toString() + String.format("(%f,%f,%f)", x, y, z));
             });
         }
+    }
+
+    //theta: the change of the view angle
+    float angleChangeHelper(float d_ro_ori, float d_ro, float scale, float theta){
+        float h_ro = v_dist * scale;
+        double beta = Math.atan(d_ro/h_ro);
+        double alhpa = 90-beta+theta;
+        double l = h_ro / Math.cos(beta);
+        double m = Math.sqrt(d_ro_ori*d_ro_ori+l*l-2*d_ro_ori*l*Math.cos(alhpa));
+        double zeta = Math.acos((m*m+l*l-d_ro_ori*d_ro_ori)/(2*m*l));
+        float dx = (float)Math.tan(zeta-beta)*h_ro+d_ro;
+        return dx;
     }
 
     static class KPoint{
@@ -1100,7 +1105,6 @@ public class PromarMainActivity extends AppCompatActivity implements SensorEvent
         return new ImageFeature(tKP, des, tIFs.get(0).getDescriptorType());
     }
 
-    //added by bo
     public void onPeekTouch (){
 
         return;
